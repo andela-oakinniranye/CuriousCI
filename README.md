@@ -1,0 +1,2 @@
+# CuriousCI
+Repo for CuCi
