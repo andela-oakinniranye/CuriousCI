@@ -2,3 +2,4 @@ curiousci.2017-07-24.private-key.pem
 
 node_modules
 tmp
+.env
