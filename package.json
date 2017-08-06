@@ -1,0 +1,15 @@
+{
+  "name": "CuriousCI",
+  "version": "1.0.0",
+  "description": "Simple CI that uses AWS Lambda, CodeBuild, API Gateway and CloudWatch",
+  "main": "Curious.js",
+  "repository": "https://github.com/andela-oakinniranye/CuriousCI.git",
+  "author": "Oreoluwa <oreoluwa@outlook.com>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.16.2",
+    "dotenv": "^4.0.0",
+    "github": "^9.2.0",
+    "jsonwebtoken": "^7.4.1"
+  }
+}
