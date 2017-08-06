@@ -1,0 +1,73 @@
+---
+
+- name: Create/Update CuriousCI's lambda functions
+  hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars:
+    home_dir: "{{ lookup('env','HOME') }}"
+
+    lambda_config:
+      main_dir: ../../cuci
+      build_dir: tmp/curious_ci_lambda
+      package_file: "tmp/CuriousCI.zip"
+
+    subdirs:
+      - app
+      - handlers
+      - utils
+      - keys
+
+  tasks:
+    - name: Create build directory
+      file:
+        path: "{{ lambda_config.build_dir }}"
+        state: directory
+
+    - name: Copy Deployment Files to Build Directory
+      synchronize:
+        src: "../{{ item }}"
+        dest: "{{ lambda_config.build_dir }}"
+        rsync_opts:
+          - "--exclude-from={{ home_dir }}/.gitignore_global"
+          - "--exclude=*.pem"
+      with_items:
+        - Curious.js
+        - app
+        - handlers
+        - keys
+        - utils
+        - package.json
+        - .env
+
+    - name: Install NPM modules
+      npm:
+        path: "{{ lambda_config.build_dir }}"
+
+    - name: Delete old Deployment Package
+      file:
+        path: "{{ lambda_config.package_file }}"
+        state: absent
+
+    - name: Zip Deployment Package
+      shell: |-
+        find . -type f | zip "../../{{ lambda_config.package_file }}" -@
+      args:
+        chdir: "{{ lambda_config.build_dir }}"
+
+    - name: Remove build directory
+      file:
+        path: "{{ lambda_config.build_dir }}"
+        state: absent
+
+    - lambda:
+        name: CuriousGithubHook
+        state: present
+        runtime: nodejs6.10
+        description: CuriousCi Github <> CodeBuild Integration
+        region: us-east-1
+        role: 'arn:aws:iam::694213528513:role/service-role/curiousHandler'
+        handler: 'Curious.handler'
+        timeout: 10
+        zip_file: "{{ lambda_config.package_file }}"

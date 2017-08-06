@@ -6,27 +6,39 @@ const buildResponse = ({status = 200 , body = JSON.stringify({}) } = {}) => {
 }
 
 const getRepo = (pullRequest) => {
-  const dataSource = pullRequest.head
-  const repo = dataSource.repo
+  const { head } = pullRequest
+  const { repo } = head
 
   return {
     owner: repo.owner.login ,
     name: repo.name,
-    sha: dataSource.sha
+    sha: head.sha
+  }
+}
+
+const cbWrapper = (callback) => {
+  return (err, res) => {
+    const status = 200
+    const body = res
+    const response = {body, status}
+
+    callback(err, buildResponse(response))
   }
 }
 
 exports.handler = (event, context, callback) => {
-  if( !('pull_request' in event) ) {
+  const payload = JSON.parse( event.body )
+
+  if( !('pull_request' in payload) ) {
     callback(null, buildResponse() )
   }
 
   githubIntegration( ({data}) => {
     const { token } = data
-    const pullRequest = event.pull_request
+    const pullRequest = payload.pull_request
     const repo = getRepo( pullRequest )
 
-    attachPendingState(token, repo);
+    attachPendingState(token, repo, cbWrapper(callback) );
   })
 
 };
